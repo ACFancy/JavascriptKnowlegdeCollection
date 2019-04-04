@@ -1,3 +1,4 @@
+'use strict'
 //函数的定义和调用
 /*
 JavaScript的函数不但是“头等公民”，而且可以像变量一样使用，具有非常强大的抽象能力
@@ -411,12 +412,215 @@ function buildDate({year, month, day, hour=0, minute=0, second=0}) {
 }
 
 //它的方便之处在于传入的对象只需要year、month和day这三个属性
-console.log('Date:', buildDate({year: 2019, month: 04, day: 3}))
+console.log('Date:', buildDate({year: 2019, month: 4, day: 3}))
 
 //也可以传入hour、minute和second属性
-console.log('Date:', buildDate({year: 2019, month: 04, day: 3, hour:19, minute: 18, second:59}))
+console.log('Date:', buildDate({year: 2019, month: 4, day: 3, hour:19, minute: 18, second:59}))
 /*
 使用解构赋值可以减少代码量，
 但是，需要在支持ES6解构赋值特性的现代浏览器中才能正常运行。
 目前支持解构赋值的浏览器包括Chrome，Firefox，Edge等
+*/
+
+//方法
+/* 
+在一个对象中绑定函数，称为这个对象的方法
+*/
+var xiaoming = {
+   name: '小明',
+   birth: 1990
+}
+
+//如果我们给xiaoming绑定一个函数，就可以做更多的事情。比如，写个age()方法，返回xiaoming的年龄
+var xiaoming = {
+  name: '小明',
+  birth: 1992,
+  age: function () {
+    var y = new Date().getFullYear()
+    return y - this.birth
+  }
+}
+
+console.log('xiaoming:', xiaoming.age)
+console.log('xiaoming:', xiaoming.age())
+
+//绑定到对象上的函数称为方法，和普通函数也没啥区别，但是它在内部使用了一个this关键字
+/* 
+在一个方法内部，this是一个特殊变量，它始终指向当前对象，也就是xiaoming这个变量。
+所以，this.birth可以拿到xiaoming的birth属性
+*/
+
+function getAge() {
+    var y = new Date().getUTCFullYear()
+    return y - this.birth
+}
+
+var xiaohe = {
+  name: '小何',
+  birth: 1990,
+  age: getAge
+}
+
+console.log('xiaohe', xiaohe.age)
+console.log('xiaohe', xiaohe.age())
+
+//单独调用函数getAge()怎么返回了NaN？请注意，我们已经进入到了JavaScript的一个大坑里
+//JavaScript的函数内部如果调用了this，那么这个this到底指向谁,视情况而定
+//如果以对象的方法形式调用，比如xiaoming.age()，该函数的this指向被调用的对象，也就是xiaoming，这是符合我们预期的
+//如果单独调用函数，比如getAge()，此时，该函数的this指向全局对象，也就是window
+// console.log('getAge', getAge()) //strit模式下Uncaught TypeError: Cannot read property 'birth' of undefined
+
+//如果这么写,也是不行的！要保证this指向正确，必须用obj.xxx()的形式调用
+//由于这是一个巨大的设计错误，要想纠正可没那么简单。
+//ECMA决定，在strict模式下让函数的this指向undefined，因此，在strict模式下，你会得到一个错误
+var fn = xiaoming.age
+// fn() //Uncaught TypeError: Cannot read property 'birth' of undefined
+
+//原因是this指针只在age方法的函数内指向xiaoming，在函数内部定义的函数，this又指向undefined了！（在非strict模式下，它重新指向全局对象window
+var xiaoming1 = {
+  birth: 1992,
+   age: function () {
+     function getAgeFromBirth() {
+       var y = new Date().getFullYear()
+       return y - this.birth
+     }
+     return getAgeFromBirth()
+   }
+}
+
+// xiaoming1.age()//Uncaught TypeError: Cannot read property 'birth' of undefined
+
+//修复的办法也不是没有，我们用一个that变量首先捕获this
+var xiaoming2 = {
+  birth: 1992,
+   age: function () {
+     var that = this
+     function getAgeFromBirth() {
+       var y = new Date().getFullYear()
+       return y - that.birth
+     }
+     return getAgeFromBirth()
+   }
+}
+console.log('xiaoming2:', xiaoming2.age())
+//用var that = this;，你就可以放心地在方法内部定义其他函数，而不是把所有语句都堆到一个方法中
+
+//apply
+/* 
+虽然在一个独立的函数调用中，根据是否是strict模式，this指向undefined或window，不过，我们还是可以控制this的指向的
+要指定函数的this指向哪个对象，可以用函数本身的apply方法，它接收两个参数，第一个参数就是需要绑定的this变量，第二个参数是Array，表示函数本身的参数
+*/
+
+//用apply修复getAge()调用
+// console.log('Before Apply', getAge())
+console.log('Apply', getAge.apply(xiaohe, []))
+
+/* 
+另一个与apply()类似的方法是call()，唯一区别是：
+apply()把参数打包成Array再传入；
+call()把参数按顺序传入。
+比如调用Math.max(3, 5, 4)，分别用apply()和call()实现如下
+对普通函数调用，我们通常把this绑定为null
+*/
+
+console.log('Math Apply', Math.max.apply(null, [3, 4, 5]))
+console.log('Math Call', Math.max.call(null, 3, 4, 5))
+// console.log('Math Call', Math.max.call(null, [3, 4, 5])) //NaN
+
+//装饰器
+/* 
+利用apply()，我们还可以动态改变函数的行为
+JavaScript的所有对象都是动态的，即使内置的函数，我们也可以重新指向新的函数
+现在假定我们想统计一下代码一共调用了多少次parseInt()，可以把所有的调用都找出来，然后手动加上count += 1，不过这样做太傻了。最佳方案是用我们自己的函数替换掉默认的parseInt()
+*/
+
+var count = 0
+var oldParseInt = parseInt
+
+window.parseInt = function () {
+  count += 1
+  return oldParseInt.apply(null, arguments)
+}
+parseInt('10')
+parseInt('10')
+parseInt('10')
+console.log('ParseInt Count', count)
+
+//高阶函数
+/*
+JavaScript的函数其实都指向某个变量。既然变量可以指向函数，函数的参数能接收变量，
+那么一个函数就可以接收另一个函数作为参数，这种函数就称之为高阶函数
+*/
+//一个最简单的高阶函数
+function add(x, y, f){
+  return f(x) + f(y)
+}
+
+console.log('add:', add(5, -6, Math.abs))
+//当我们调用add(-5, 6, Math.abs)时，参数x，y和f分别接收-5，6和函数Math.abs，根据函数定义，我们可以推导计算过程为
+/*
+x = 5
+y = -6
+f = Math.abs
+f(x) + f(y) ==> Math.abs(x) + Math.abs(y)  ==> 11
+return 11
+*/
+//写高阶函数，就是让函数的参数能够接收别的函数
+
+//map/reduce
+//map 
+/* 
+举例说明，比如我们有一个函数f(x)=x2，要把这个函数作用在一个数组[1, 2, 3, 4, 5, 6, 7, 8, 9]上，就可以用map实现如下
+*/
+//由于map()方法定义在JavaScript的Array中，我们调用Array的map()方法，传入我们自己的函数，就得到了一个新的Array作为结果
+function pow(x) {
+  if (typeof x !== 'number') {
+    return 0
+  }
+  return x * x
+}
+
+var arr = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+var results = arr.map(pow)
+console.log('Result:',  results)
+
+//注意：map()传入的参数是pow，即函数对象本身
+//map()作为高阶函数，事实上它把运算规则抽象了，因此，我们不但可以计算简单的f(x)=x2，还可以计算任意复杂的函数，比如，把Array的所有数字转为字符串
+console.log('String:', arr.map(String))
+
+//reduce
+/* 
+再看reduce的用法。Array的reduce()把一个函数作用在这个Array的[x1, x2, x3...]上，
+这个函数必须接收两个参数，reduce()把结果继续和序列的下一个元素做累积计算，其效果就是
+[x1, x2, x3, x4].reduce(f) = f(f(f(x, x2), x3), x4)
+*/
+//比方说对一个Array求和，就可以用reduce实现
+var arr1 = [1, 3, 5, 7, 9]
+var result = arr1.reduce(function(x, y) {
+  return x + y
+}) 
+console.log('result:', result)
+
+//要把[1, 3, 5, 7, 9]变换成整数13579，reduce()也能派上用场
+result = arr1.reduce(function(x, y) {
+     return x * 10 + y
+})
+console.log('result:', result)
+
+//小明希望利用map()把字符串变成整数，他写的代码很简洁
+var arr = ['1', '2', '3'];
+var r;
+r = arr.map(parseInt);
+console.log(r);
+/*
+结果竟然是1, NaN, NaN，小明百思不得其解，请帮他找到原因并修正代码
+由于map()接收的回调函数可以有3个参数：callback(currentValue, index, array)，通常我们仅需要第一个参数，而忽略了传入的后面两个参数。不幸的是，parseInt(string, radix)没有忽略第二个参数，导致实际执行的函数分别是：
+
+parseInt('0', 0); // 0, 按十进制转换
+
+parseInt('1', 1); // NaN, 没有一进制
+
+parseInt('2', 2); // NaN, 按二进制转换不允许出现2
+
+可以改为r = arr.map(Number);，因为Number(value)函数仅接收一个参数。
 */
