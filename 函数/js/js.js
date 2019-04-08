@@ -624,3 +624,730 @@ parseInt('2', 2); // NaN, 按二进制转换不允许出现2
 
 可以改为r = arr.map(Number);，因为Number(value)函数仅接收一个参数。
 */
+r = arr.map(Number);
+console.log(r);
+
+//filter
+/* 
+filter也是一个常用的操作，它用于把Array的某些元素过滤掉，然后返回剩下的元素
+和map()类似，Array的filter()也接收一个函数。和map()不同的是，filter()把传入的函数依次作用于每个元素，
+然后根据返回值是true还是false决定保留还是丢弃该元素。
+例如，在一个Array中，删掉偶数，只保留奇数，可以这么写
+*/
+
+var arr_f = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15]
+var temp = arr_f.filter(function(x) {
+  if (typeof x !== 'number') {
+    return 0;
+  }
+  return ((x & 1) > 0)
+})
+console.log('filter: odd:', temp)
+
+//把一个Array中的空字符串删掉，可以这么写
+var arr_f = ['A', '', 'B', null, undefined, 'C', '']
+temp = arr_f.filter(function(s) {
+  return s && s.trim()
+})
+console.log('filter: string:', temp)
+//可见用filter()这个高阶函数，关键在于正确实现一个“筛选”函数
+
+//回调函数
+/*
+filter()接收的回调函数，其实可以有多个参数。
+通常我们仅使用第一个参数，表示Array的某个元素。回调函数还可以接收另外两个参数，表示元素的位置和数组本身
+*/
+var arr_f = ['A', 'B', 'C']
+temp = arr_f.filter(function (element, index , self){
+   console.log('filter:function:element:', element)
+   console.log('filter:function:index:', index)
+   console.log('filter:function:arraySelf:', self)
+})
+
+//利用filter，可以巧妙地去除Array的重复元素
+//去除重复元素依靠的是indexOf总是返回第一个元素的位置，后续的重复元素位置与indexOf返回的位置不相等，因此被filter滤掉了
+var arr_f = ['apple', 'strawberry', 'banana', 'pear', 'apple', 'orange', 'strawberry']
+temp = arr_f.filter(function(element, index, self) {
+  return self.indexOf(element) === index
+})
+console.log('filter:removeSameElement', temp, arr_f === temp)
+
+//请尝试用filter()筛选出素数
+function get_primes(arr) {
+  let temp = arr.filter(function(element) {
+    let isPrime = element >= 2 ? true : false
+    for (let i = 2; i * i <= element; i++) {
+        if (element % i == 0) {
+           isPrime = false
+           break
+        }
+    }
+   return isPrime
+  }) 
+
+  console.log('temp: ' + temp)
+  return temp
+}
+
+// 测试:
+var arr = [];
+for (let x = 1; x < 100; x++) {
+    arr.push(x);
+}
+temp = get_primes(arr);
+if (temp.toString() === [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97].toString()) {
+    console.log('测试通过!');
+} else {
+    console.log('测试失败: ' + temp.toString());
+}
+
+//sort
+//排序算法
+/*
+排序也是在程序中经常用到的算法。无论使用冒泡排序还是快速排序，排序的核心是比较两个元素的大小
+如果是数字，我们可以直接比较，但如果是字符串或者两个对象呢？直接比较数学上的大小是没有意义的，
+因此，比较的过程必须通过函数抽象出来
+通常规定，对于两个元素x和y，如果认为x < y，则返回-1，如果认为x == y，则返回0，如果认为x > y，则返回1
+这样，排序算法就不用关心具体的比较过程，而是根据比较结果直接排序
+JavaScript的Array的sort()方法就是用于排序的，但是排序结果可能让你大吃一惊
+*/
+console.log('sort:', ['Google', 'Apple', 'Microsoft'].sort())
+console.log('sort:', ['Google', 'apple', 'Microsoft'].sort())
+console.log('sort:', [10, 20, 1, 2, 9, 6].sort())
+//如果不知道sort()方法的默认排序规则，直接对数字排序，绝对栽进坑里
+//幸运的是，sort()方法也是一个高阶函数，它还可以接收一个比较函数来实现自定义的排序
+var arr_s = [10, 20, 20, 2, 2, 1, 2, 1]
+temp = arr_s.sort(function(x, y) {
+   return x <= y ? -1 : 1
+})
+console.log('sort:', temp)
+//倒序
+temp = arr_s.sort(function(x, y) {
+  return x <= y ? 1 : -1
+})
+console.log('sort:', temp)
+/*
+默认情况下，对字符串排序，是按照ASCII的大小比较的，现在，我们提出排序应该忽略大小写，按照字母序排序。
+要实现这个算法，不必对现有代码大加改动，只要我们能定义出忽略大小写的比较算法就可以
+忽略大小写来比较两个字符串，实际上就是先把字符串都变成大写（或者都变成小写），再比较
+从上述例子可以看出，高阶函数的抽象能力是非常强大的，而且，核心代码可以保持得非常简洁
+最后友情提示，sort()方法会直接对Array进行修改，它返回的结果仍是当前Array
+*/
+var arr_s = ['Google', 'apple', 'Microsoft']
+temp = arr_s.sort(function(s1, s2) {
+   let temp1 = s1.toUpperCase()
+   let temp2 = s2.toUpperCase()
+   return temp1 <= temp2 ? -1 : 1
+})
+console.log('sort:', temp, arr_s, temp === arr_s)
+
+//闭包
+//函数作为返回值
+/* 
+高阶函数除了可以接受函数作为参数外，还可以把函数作为结果值返回.
+我们来实现一个对Array的求和。通常情况下，求和的函数是这样定义的
+*/
+
+function sum(arr) {
+  return arr.reduce(function(x, y) {
+    return x + y
+  })
+}
+
+console.log('sum', sum([1, 2, 3, 4, 5]))
+
+//但是，如果不需要立刻求和，而是在后面的代码中，根据需要再计算怎么办？可以不返回求和的结果，而是返回求和的函数
+/*
+在这个例子中，我们在函数lazy_sum中又定义了函数sum，并且，内部函数sum可以引用外部函数lazy_sum的参数和局部变量，
+当lazy_sum返回函数sum时，相关参数和变量都保存在返回的函数中，这种称为“闭包（Closure）”的程序结构拥有极大的威力
+*/
+function lazy_sum(arr) {
+  var sum = function () {
+    return arr.reduce(function(x, y) {
+      return x + y
+    })
+  }
+  return sum
+}
+
+let f = lazy_sum([1, 2, 3, 4, 5])
+console.log('lazy_sum', f)
+console.log('lazy_sum', f())
+
+//请再注意一点，当我们调用lazy_sum()时，每次调用都会返回一个新的函数，即使传入相同的参数
+var f1 = lazy_sum([1, 2, 3, 4, 5])
+console.log('lazy_sum:Equal:',  f === f1)
+
+//闭包
+/*
+注意到返回的函数在其定义内部引用了局部变量arr，所以，当一个函数返回了一个函数后，其内部的局部变量还被新函数引用，
+所以，闭包用起来简单，实现起来可不容易
+另一个需要注意的问题是，返回的函数并没有立刻执行，而是直到调用了f()才执行
+ */
+function Count() {
+  var arr = []
+  for (var i = 1; i <= 3; i++) {
+    arr.push(function(){
+      return i * i
+    })
+  }
+  return arr
+}
+
+temp = Count()
+var f1 = temp[0]
+var f2 = temp[1]
+var f3 = temp[2]
+console.log('closure: count:', f1, f2, f3)
+//在上面的例子中，每次循环，都创建了一个新的函数，然后，把创建的3个函数都添加到一个Array中返回了
+//你可能认为调用f1()，f2()和f3()结果应该是1，4，9，但实际结果
+console.log('closure: count:', f1(), f2(), f3()) // 16, 16, 16
+//全部都是16！原因就在于返回的函数引用了变量i，但它并非立刻执行。等到3个函数都返回时，它们所引用的变量i已经变成了4，因此最终结果为16
+
+/* 
+返回闭包时牢记的一点就是：返回函数不要引用任何循环变量，或者后续会发生变化的变量
+1.使用let关键字，声明的变量仅在块级作用域内有效
+2.如果一定要引用循环变量怎么办？方法是再创建一个函数，用该函数的参数绑定循环变量当前的值，
+  无论该循环变量后续如何更改，已绑定到函数参数的值不变
+*/
+function Count1() {
+  var arr = []
+  for (var i = 1; i <= 3; i++) {
+    arr.push((function(j){
+       return function() {
+         return j * j
+       }
+    })(i))
+  }
+  return arr
+}
+//注意这里用了一个“创建一个匿名函数并立刻执行”的语法
+temp = Count1()
+var f1 = temp[0]
+var f2 = temp[1]
+var f3 = temp[2]
+console.log('closure: count:', f1, f2, f3)
+console.log('closure: count:', f1(), f2(), f3()) // 1, 4, 9
+
+function Count2() {
+  var arr = []
+  for (let i = 1; i <= 3; i++) {
+    arr.push(function(){
+      return i * i
+    })
+  }
+  return arr
+}
+temp = Count2()
+var f1 = temp[0]
+var f2 = temp[1]
+var f3 = temp[2]
+console.log('closure: count:', f1, f2, f3)
+console.log('closure: count:', f1(), f2(), f3()) // 1, 4, 9
+/*
+上面代码中，变量i是let声明的，当前的i只在本轮循环有效，所以每一次循环的i其实都是一个新的变量。
+你可能会问，如果每一轮循环的变量i都是重新声明的，那它怎么知道上一轮循环的值，从而计算出本轮循环的值？
+这是因为 JavaScript 引擎内部会记住上一轮循环的值，初始化本轮的变量i时，就在上一轮循环的基础上进行计算。
+
+另外，for循环还有一个特别之处，就是设置循环变量的那部分是一个父作用域，而循环体内部是一个单独的子作用域
+下面代码正确运行，输出了 3 次abc。这表明函数内部的变量i与循环变量i不在同一个作用域，有各自单独的作用域
+*/
+for (let i = 0; i < 3; i++) {
+  let i = 'abc'
+  console.log('let:', i)
+}
+
+/*
+ 理论上讲，创建一个匿名函数并立刻执行可以这么写
+ function (x) { return x*x} (3);
+ 但是由于JavaScript语法解析的问题，会报SyntaxError错误，因此需要用括号把整个函数定义括起来
+ (function(x) {return x*x}) (3);
+ 通常，一个立即执行的匿名函数可以把函数体拆开，一般这么写
+ (function(x) {
+    return x * x
+ })(3)
+*/
+
+/* 
+说了这么多，难道闭包就是为了返回一个函数然后延迟执行吗？
+当然不是！闭包有非常强大的功能。举个栗子
+在面向对象的程序设计语言里，比如Java和C++，要在对象内部封装一个私有变量，可以用private修饰一个成员变量
+在没有class机制，只有函数的语言里，借助闭包，同样可以封装一个私有变量。我们用JavaScript创建一个计数器
+在返回的对象中，实现了一个闭包，该闭包携带了局部变量x，并且，从外部代码根本无法访问到变量x。
+换句话说，闭包就是携带状态的函数，并且它的状态可以完全对外隐藏起来
+*/
+function create_counter(initial) {
+  console.log('initial', initial)
+  var x_c = initial || 0
+  console.log('x_c', x_c)
+  return {
+    inc: function () {
+       x_c += 1
+       return x_c
+    }
+  }
+}
+
+var c1 = create_counter(1)
+console.log('createCounter:', c1.inc())
+console.log('createCounter:', c1.inc())
+console.log('createCounter:', c1.inc())
+
+/* 
+闭包还可以把多参数的函数变成单参数的函数。例如，要计算xy可以用Math.pow(x, y)函数，
+不过考虑到经常计算x^2或x^3，我们可以利用闭包创建新的函数pow2和pow3
+*/
+function make_pow(n) {
+  return function (x) {
+    return Math.pow(x, n)
+  }
+}
+
+var pow2 = make_pow(2)
+var pow3 = make_pow(3)
+
+console.log('pow2', pow2(4))
+console.log('pow3', pow3(4))
+
+//脑洞大开
+/* 
+只需要用函数，就可以用计算机实现运算，而不需要0、1、2、3这些数字和+、-、*、/这些符号
+JavaScript支持函数，所以可以用JavaScript用函数来写这些计算
+f(x)的不返回的值默认是undefined， 
+addC主要是执行函数
+*/
+
+var zero = function(f) {
+  return function(x) {
+    return x
+  }
+}
+
+var one = function(f) {
+  return function(x) {
+    // console.log('tag', x)
+    return f(x)
+  }
+}
+
+function addC(n, m) {
+  return function(f) {
+    return function (x) {
+      var temp = m(f)(n(f)(x))
+      // console.log('temp', temp)
+      return temp
+    }
+  }
+}
+
+var two = addC(one, one);
+
+var three = addC(one, two);
+
+var five = addC(two, three);
+
+(one(function(x) {
+  console.log('ja:', 'print 1 times', x)
+  return 1;
+}))(1);
+
+(two(function(x) {
+  console.log('ja:', 'print 2 times', x)
+  return 2;
+}))(2);
+
+
+(three(function(x) {
+  console.log('ja:', 'print 3 times', x)
+  return 3;
+}))(3);
+
+(five(function() {
+  console.log('ja:', 'print 5 times')
+  return 5;
+}))(5);
+
+//乘法
+function multiply(n, m) {
+   return function(f) {
+     return function(x) {
+      return (m(function() {
+             return n(f)(x)
+       }))(x)
+     }
+   }
+}
+
+function multiply2(n, m) {
+  return function(f) {
+    return function(x) {
+      var i = 0;
+      var j = 0;
+      m(function(){
+        i+=1
+        return x
+      })(x)
+      n(function(){
+        j+=1
+        return x
+      })(x)
+      for(let jar = 0; jar < (i*j); jar++) {
+        f(x)
+      }
+      return x
+    }
+  }
+}
+
+var six = multiply(two, three);
+(six(function(x){
+   console.log('ja:', 'print 6 times', x)
+   return 6
+}))(6)
+
+var eighteen = multiply(six, three);
+(eighteen(function(x){
+   console.log('ja:', 'print 18 times', x)
+   return 18
+}))(18)
+
+//减法
+function sub(m, n) {
+  return function(f) {
+    return function(x) {
+        var arr = []
+        m(function(){
+          arr.push(f)
+          return x
+        })(x)
+        n(function() {
+          arr.pop()
+          return x
+        })(x)
+        arr.forEach(f => f(x))
+        return x
+      }
+  }
+}
+
+var twelvef = multiply(two, six);
+(twelvef(function(x){
+  console.log('ja:', 'print 12 times', x)
+  return 12
+}))(12)
+
+var nine = sub(twelvef, three);
+(nine(function(x){
+  console.log('ja:', 'print 9 times', x)
+  return 9
+}))(9)
+
+//除法
+function divide(m, n) {
+  return function(f) {
+    return function(x) {
+      var divider = []
+      var divided = []
+      var result = []
+      m(function() {
+        divider.push(f)
+        return x
+      })(x)
+      n(function() {
+        divided.push(f)
+        return x
+      })(x)
+      while(divider.length >= divide.length) {
+        divider.splice(0, divided.length)
+        result.push(f)
+      }
+
+      result.forEach(f => f(x))
+      return x
+    }
+  }
+}
+
+var nineDivideTwo = divide(nine, two);
+(nineDivideTwo(function(x){
+  console.log('ja:', 'print 4 times', parseInt(x))
+  return 9/2
+}))(9/2)
+
+//求余
+function mod(m, n) {
+  return function(f) {
+    return function(x) {
+      var divider = []
+      var divided = []
+      m(function() {
+        divider.push(f)
+        return x
+      })(x)
+      n(function(){
+        divided.push(f)
+        return x
+      })(x)
+      while(divider.length >= divided.length) {
+        divider.splice(0, divided.length)
+      }
+      divider.forEach(f => f(x))
+      return x
+    }
+  }
+}
+
+var twelvefMod9 = mod(twelvef, nine);
+(twelvefMod9(function(x){
+  console.log('ja:', 'print 3 times', x)
+  return (12%9)
+}))((12%9))
+
+//箭头函数
+/* 
+ES6标准新增了一种新的函数：Arrow Function（箭头函数)
+为什么叫Arrow Function？因为它的定义用的就是一个箭头
+x => x * x;
+上面的箭头函数相当于：
+function(x) {
+  return x * x;
+}
+箭头函数相当于匿名函数，并且简化了函数定义
+ 1. 箭头函数有两种格式，一种像上面的，只包含一个表达式，连{ ... }和return都省略掉了
+*/
+var fn = x => x * x
+console.log('Arrow Funciton:', fn(6))
+
+// 2. 还有一种可以包含多条语句，这时候就不能省略{ ... }和return
+x => {
+  if (x > 0) {
+    return x * x
+  } else {
+    return -(x * x)
+  }
+}
+
+//如果参数不是一个，就需要用括号()括起来
+(x, y) => x * x + y * y;
+
+//无参
+() => 3.14;
+
+//可变参
+let varParamsFunc =
+(x, y, ...rest) => {
+   var i , sum = x + y;
+   rest.forEach(x => {
+     sum += x
+   })
+   return sum
+};
+console.log('test:', varParamsFunc(1, 2, 3, 4, 5, 6))
+
+//如果要返回一个对象，就要注意，如果是单表达式，这么写的话会报错
+var objectFunc = yb => { foo: yb} //SyntaxError 实际上没报错。和浏览器相关？
+
+//因为和函数体的{ ... }有语法冲突，所以要改为
+var objectFunc = yb => ({foo: yb})
+
+//this
+/* 
+箭头函数看上去是匿名函数的一种简写，但实际上，箭头函数和匿名函数有个明显的区别:
+箭头函数内部的this是词法作用域，由上下文确定
+由于JavaScript函数对this绑定的错误处理，下面的例子无法得到预期结果
+*/
+
+var obj = {
+  birth: 1992,
+  getAge: function() {
+    var b = this.birth;
+    var fn = function() {
+      return new Date().getFullYear() - this.birth // this指向window或undefined
+    };
+    return fn();
+  }
+}
+// console.log('age', obj.getAge())
+
+//现在，箭头函数完全修复了this的指向，this总是指向词法作用域，也就是外层调用者obj
+var obj = {
+  birth: 1992,
+  getAge: function() {
+    var b = this.birth;
+    var fn = () => new Date().getUTCFullYear() - this.birth; //this指向obj对象
+    return fn();
+  }
+}
+console.log('age', obj.getAge())
+
+/*
+如果使用箭头函数，以前的那种hack写法
+var that = this;
+就不再需要了。
+由于this在箭头函数中已经按照词法作用域绑定了，所以，用call()或者apply()调用箭头函数时
+无法对this进行绑定，即传入的第一个参数被忽略
+*/
+var obj = {
+  birth: 1992,
+  getAge: function(year) {
+    var b = this.birth;
+    // var fn = (y) => y - this.birth
+    var that = this;
+    var fn = function(y) {
+       return y - this.birth
+    }
+    return fn.call({birth: 2000}, year)
+  }
+}
+console.log('age', obj.getAge(2019))
+
+//generator
+/*
+generator（生成器）是ES6标准引入的新的数据类型。一个generator看上去像一个函数，但可以返回多次
+ES6定义generator标准的哥们借鉴了Python的generator的概念和语法，如果你对Python的generator很熟悉，那么ES6的generator就是小菜一碟了
+我们先复习函数的概念。一个函数是一段完整的代码，调用一个函数就是传入参数，然后返回结果
+*/
+function foo(x) {
+  return x + x
+}
+console.log('foo:', foo(22))
+
+//函数在执行过程中，如果没有遇到return语句（函数末尾如果没有return，就是隐含的return undefined;），控制权无法交回被调用的代码
+//generator跟函数很像，定义如下
+function* foo(x) {
+  yield x + 1;
+  yield x + 2;
+  yield x + 3;
+}
+/* 
+generator和函数不同的是，generator由function*定义（注意多出的*号），并且，除了return语句，还可以用yield返回多次
+generator就是能够返回多次的“函数”？返回多次有啥用？
+还是举个栗子吧。
+我们以一个著名的斐波那契数列为例，它由0，1开头
+0 1 1 2 3 5 8 13 21 24 ...
+*/
+function fib(max) {
+  var t, a = 0, b = 1, arr = [0, 1];
+  while (arr.length < max) {
+    [a, b] = [b, a + b]
+    arr.push(b)
+  }
+  return arr;
+}
+console.log('fib:', fib(5).toString())
+console.log('fib', fib(10).toString())
+//函数只能返回一次，所以必须返回一个Array。但是，如果换成generator，就可以一次返回一个数，不断返回多次。用generator改写如下
+function* fibb(max) {
+  var t, a = 0, b = 1, n = 0;
+  while (n < max) {
+    yield a;
+    [a, b] = [b, a + b]
+    n++
+  }
+  return 10000;
+}
+console.log('fib:', fibb(5))//// fib {[[GeneratorStatus]]: "suspended", [[GeneratorReceiver]]: Window}
+/*
+直接调用一个generator和调用函数不一样，fibb(5)仅仅是创建了一个generator对象，还没有去执行它
+调用generator对象有两个方法，一是不断地调用generator对象的next()方法
+next()方法会执行generator的代码，然后，每次遇到yield a;就返回一个对象{value: a, done: true/false}，然后“暂停”。返回的value就是yield的返回值，
+done表示这个generator是否已经执行结束了。如果done为true，则value就是return的返回值。
+当执行到done为true时，这个generator对象就已经全部执行完毕，不要再继续调用next()了
+*/
+var fbb = fibb(5)
+// console.log('fibb:', fbb.next())
+// console.log('fibb:', fbb.next())
+// console.log('fibb:', fbb.next())
+// console.log('fibb:', fbb.next())
+// console.log('fibb:', fbb.next())
+// console.log('fibb:', fbb.next())
+var next;
+while ((next = fbb.next()).done === false) {
+  console.log('fibb:', next)
+}
+
+//第二个方法是直接用for ... of循环迭代generator对象，这种方式不需要我们自己判断done
+for (const x of fibb(10)) {
+   console.log('fibb:', x)
+}
+
+/*
+generator和普通函数相比，有什么用？
+
+因为generator可以在执行过程中多次返回，所以它看上去就像一个可以记住执行状态的函数，利用这一点，
+写一个generator就可以实现需要用面向对象才能实现的功能。例如，用一个对象来保存状态，得这么写
+用对象的属性来保存状态，相当繁琐
+generator还有另一个巨大的好处，就是把异步回调代码变成“同步”代码。这个好处要等到后面学了AJAX以后才能体会到
+*/
+var fibvar = {
+  a: 0,
+  b: 1,
+  n: 0,
+  max: 5,
+  next: function() {
+    var r = this.a, t = this.a + this.b;
+    this.a = this.b;
+    this.b = t;
+    if (this.n < this.max) {
+      this.n++;
+      return r;
+    } else {
+      return undefined
+    }
+  }
+}
+
+//没有generator之前的黑暗时代，用AJAX时需要这么写代码
+/* 
+ajax('http://url-1', data1, function(err, result) {
+  if (err) {
+    return handle(err);
+  }
+  ajax('http://url-2', data2, function(err, result) {
+    if (err) {
+      return handle(err);
+    }
+    ajax('http://url-3', data3, function(err, result) {
+      if (err) {
+        return handle(err); 
+      }
+      return success(result);
+    })
+  })
+})
+回调越多，代码越难看。
+
+有了generator的美好时代，用AJAX时可以这么写
+try {
+  r1 = yield ajax('http://url-1', data1);
+  r2 = yield ajax('http://url-2', data2);
+  r3 = yield ajax('http://url-3', data3);
+  success(r3)
+}
+看上去是同步的代码，实际执行是异步的
+*/
+
+function* next_id() {
+  let id = 0
+  // console.log(id)
+  while(true) {
+   console.log(id)
+   yield (++id);
+  }
+  return;
+}
+// 测试:
+var
+    x,
+    pass = true,
+    g = next_id();
+for (x = 1; x < 10; x ++) {
+    if (g.next().value !== x) {
+        pass = false;
+        console.log('测试失败!');
+        break;
+    }
+}
+if (pass) {
+    console.log('测试通过!');
+}
